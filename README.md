@@ -1,4 +1,4 @@
-# FILI_BROWSE
+# Fili_browse
 Este script SQL cria uma tabela chamada "Img_colaborador" com colunas específicas para armazenar informações sobre imagens de colaboradores. Além disso, inclui um gatilho (trigger) chamado "BI_Img_colaborador" que é executado antes de uma inserção na tabela. Aqui estão algumas explicações sobre cada parte do script:
 
 1. **Criação da Tabela:**
@@ -41,3 +41,91 @@ Este script SQL cria uma tabela chamada "Img_colaborador" com colunas específic
    - Esta instrução ativa o gatilho para que ele comece a responder aos eventos.
 
 Lembre-se de que, ao usar letras maiúsculas nos nomes de tabela e coluna, você precisará sempre referenciar esses objetos usando aspas duplas. Certifique-se de ajustar conforme necessário para atender aos requisitos do seu sistema.
+
+
+
+# Configuração do APEX para Download de Arquivos
+download de arquivo botão ou link
+```
+create or replace PROCEDURE get_id (p_get_id  IN VARCHAR2) IS
+  l_blob_content  CELL_BOLETO.CONTENT%TYPE;
+  l_mime_type     CELL_BOLETO.MIMETYPE%TYPE;
+  l_file_name     CELL_BOLETO.FILENAME%TYPE;
+BEGIN
+  SELECT CONTENT,
+         MIMETYPE,
+         FILENAME
+  INTO   l_blob_content,
+         l_mime_type,
+         l_file_name
+  FROM   CELL_BOLETO
+  WHERE  ID_BOLETO = p_get_id;
+  sys.HTP.init;
+  sys.OWA_UTIL.mime_header(l_mime_type, FALSE);
+  sys.HTP.p('Content-Length: ' || DBMS_LOB.getlength(l_blob_content));
+  sys.HTP.p('Content-Disposition: filename="' || l_file_name || '"');
+  sys.OWA_UTIL.http_header_close;
+  sys.WPG_DOCLOAD.download_file(l_blob_content);
+  apex_application.stop_apex_engine;
+EXCEPTION
+  WHEN apex_application.e_stop_apex_engine THEN
+    NULL;
+  WHEN OTHERS THEN
+    HTP.p('ERRO NO ARQUIVO');
+END;
+```
+
+## Item de Aplicativo
+
+1. Crie um novo item de aplicativo.
+
+   - **Caminho:** Componentes compartilhados > Itens de aplicativo
+   - **Ação:** Clique no botão "Criar".
+   - **Detalhes do Item:**
+      - **Nome:** FILE_ID
+      - **Escopo:** Aplicação
+      - **Proteção do estado da sessão:** Soma de verificação necessária - nível do usuário
+   - Clique no botão "Criar item de aplicativo".
+
+## Processo de Inscrição
+
+2. Crie um novo processo de inscrição.
+
+   - **Caminho:** Componentes Compartilhados > Processos de Aplicativo
+   - **Ação:** Clique no botão "Criar".
+   - **Detalhes do Processo:**
+      - **Nome:** GET_ID
+      - **Sequência:** {aceitar o padrão}
+      - **Ponto de processo:** Retorno de chamada do Ajax: execute este processo de aplicativo quando solicitado por um processo de página.
+   - Clique no botão "Avançar".
+   - Insira o PL/SQL necessário para realizar o download.
+```
+BEGIN 
+  get_id(:FILE_ID); 
+FIM;
+```
+   - Clique no botão "Avançar".
+   - Selecione o tipo de condição "O usuário é autenticado (não público)".
+   - Clique no botão "Criar Processo".
+   - Se precisar adicionar autorização, clique no novo processo de inscrição, selecione o esquema de autorização e clique no botão "Aplicar alterações".
+
+---
+
+## Botão
+ - No painel de propriedades, na seção “Comportamento”, selecione a “Ação” de “Redirecionar para URL”.
+```
+f?p=&APP_ID.:1:&APP_SESSION.:APPLICATION_PROCESS=GET_ID:::FILE_ID:MEU_ID
+```
+```
+select 
+       'f?p=&APP_ID.:1:&APP_SESSION.:APPLICATION_PROCESS=GET_FILE:::FILE_ID:'||B.ID_BOLETO||'' AS BAIXAR
+from CELL_BOLETO B
+ ```
+
+## Link
+```
+<a href="f?p=&APP_ID.:1:&APP_SESSION.:APPLICATION_PROCESS=GET_FILE:::FILE_ID:MEU_ID">Baixar</a>
+```
+
+## Para mais informação:
+https://oracle-base.com/articles/misc/apex-tips-file-download-from-a-button-or-link
