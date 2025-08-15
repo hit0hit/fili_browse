@@ -1,9 +1,9 @@
 # Fili_browse
-Este script SQL cria uma tabela chamada "Img_colaborador" com colunas específicas para armazenar informações sobre imagens de colaboradores. Além disso, inclui um gatilho (trigger) chamado "BI_Img_colaborador" que é executado antes de uma inserção na tabela. Aqui estão algumas explicações sobre cada parte do script:
+Este script SQL cria uma tabela chamada "FILI_BROWSE" com colunas específicas para armazenar informações sobre imagens de colaboradores. Além disso, inclui um gatilho (trigger) chamado "BI_FILI_BROWSE" que é executado antes de uma inserção na tabela. Aqui estão algumas explicações sobre cada parte do script:
 
 1. **Criação da Tabela:**
    ```sql
-   CREATE TABLE "Img_colaborador" (
+   CREATE TABLE "FILI_BROWSE" (
      "EMPLOYEE_ID" NUMBER,
      "FILENAME" VARCHAR2(100),
      "CONTENT" BLOB,
@@ -22,21 +22,21 @@ Este script SQL cria uma tabela chamada "Img_colaborador" com colunas específic
 
 2. **Criação do Gatilho (Trigger):**
    ```sql
-   CREATE OR REPLACE EDITIONABLE TRIGGER "BI_Img_colaborador"
-   BEFORE INSERT ON "Img_colaborador"
+   CREATE OR REPLACE EDITIONABLE TRIGGER "BI_FILI_BROWSE"
+   BEFORE INSERT ON "FILI_BROWSE"
    FOR EACH ROW
    BEGIN
      IF :NEW."EMPLOYEE_ID" IS NULL THEN
-       SELECT "Img_colaborador_SEQ".NEXTVAL INTO :NEW."EMPLOYEE_ID" FROM sys.dual;
+       SELECT "FILI_BROWSE_SEQ".NEXTVAL INTO :NEW."EMPLOYEE_ID" FROM sys.dual;
      END IF;
    END;
    ```
    - Este é um gatilho "BEFORE INSERT" que é acionado antes de inserir um novo registro na tabela.
-   - Se "EMPLOYEE_ID" for nulo, ele usa uma sequência chamada "Img_colaborador_SEQ" para gerar um novo valor.
+   - Se "EMPLOYEE_ID" for nulo, ele usa uma sequência chamada "FILI_BROWSE_SEQ" para gerar um novo valor.
 
 3. **Ativação do Gatilho:**
    ```sql
-   ALTER TRIGGER "BI_Img_colaborador" ENABLE;
+   ALTER TRIGGER "BI_FILI_BROWSE" ENABLE;
    ```
    - Esta instrução ativa o gatilho para que ele comece a responder aos eventos.
 
@@ -57,13 +57,13 @@ Este procedimento PL/SQL é responsável por excluir registros existentes na tab
 DECLARE
    lp NUMBER := 0;
 BEGIN
-   -- Exclui registros existentes na tabela IMG_COLABORADOR para o ID fornecido
+   -- Exclui registros existentes na tabela FILI_BROWSE para o ID fornecido
    DELETE FROM IMG WHERE ID = :P64_ID;
 
    -- Itera sobre os registros da tabela temporária APEX_APPLICATION_TEMP_FILES
    FOR lp IN (SELECT * FROM APEX_APPLICATION_TEMP_FILES)
    LOOP
-      -- Insere novos registros na tabela IMG
+      -- Insere novos registros na tabela FILI_BROWSE
       INSERT INTO IMG (
          FILENAME,
          CONTENT,
@@ -83,14 +83,14 @@ END;
 
 ### Uso
 
-Este procedimento é utilizado para atualizar ou adicionar imagens associadas a um determinado ID. Certifique-se de fornecer o valor apropriado para o item de página `P64_ID` antes de executar este bloco PL/SQL.
+Este procedimento é utilizado para atualizar ou adicionar imagens associadas a um determinado ID. Certifique-se de fornecer o valor apropriado para o item de página `:ID` antes de executar este bloco PL/SQL.
 
 ### Exemplo de Teste
 
 Para testar o procedimento, você pode seguir estas etapas:
 
 1. **Preparação**: Certifique-se de ter uma tabela temporária APEX_APPLICATION_TEMP_FILES populada com dados de imagem válidos.
-2. **Configuração**: Substitua o valor de `:P64_ID` por um ID de colaborador existente.
+2. **Configuração**: Substitua o valor de `:ID` por um ID de colaborador existente.
 3. **Execução**: Execute o bloco PL/SQL no Oracle APEX.
 4. **Verificação**: Confirme se os registros associados ao ID foram corretamente excluídos e os novos registros foram inseridos na tabela IMG.
 
@@ -101,29 +101,29 @@ Para testar o procedimento, você pode seguir estas etapas:
 
 
 
-## Atualização de Dados na Tabela EMPRESA
+## Atualização de Dados na Tabela FILI_BROWSE
 
-Este bloco SQL é responsável por atualizar os dados na tabela `EMPRESA` com informações provenientes da tabela temporária `APEX_APPLICATION_TEMP_FILES`.
+Este bloco SQL é responsável por atualizar os dados na tabela `FILI_BROWSE` com informações provenientes da tabela temporária `APEX_APPLICATION_TEMP_FILES`.
 
 ### Instrução SQL
 
 ```sql
-UPDATE EMPRESA
+UPDATE FILI_BROWSE
 SET 
    FILENAME = (SELECT FILENAME FROM APEX_APPLICATION_TEMP_FILES),
    CONTENT = (SELECT BLOB_CONTENT FROM APEX_APPLICATION_TEMP_FILES),
    MIMETYPE = (SELECT MIME_TYPE FROM APEX_APPLICATION_TEMP_FILES),
    LAST_UPDATE = (SELECT CREATED_ON FROM APEX_APPLICATION_TEMP_FILES)
-WHERE ID_EMPRESA = :GLOBAL_FK_EMPRESA;
+WHERE ID = :ID;
 ```
 
 ### Uso
 
-Esta instrução SQL é utilizada para atualizar os campos `FILENAME`, `CONTENT`, `MIMETYPE` e `LAST_UPDATE` na tabela `EMPRESA` com os dados correspondentes da tabela temporária `APEX_APPLICATION_TEMP_FILES`. Certifique-se de fornecer o valor apropriado para o parâmetro `:GLOBAL_EMPRESA` antes de executar esta instrução SQL.
+Esta instrução SQL é utilizada para atualizar os campos `FILENAME`, `CONTENT`, `MIMETYPE` e `LAST_UPDATE` na tabela `FILI_BROWSE` com os dados correspondentes da tabela temporária `APEX_APPLICATION_TEMP_FILES`. Certifique-se de fornecer o valor apropriado para o parâmetro `:GLOBAL_FILI_BROWSE` antes de executar esta instrução SQL.
 
 ## Observações
 
-- Antes de executar esta instrução SQL, certifique-se de que os dados na tabela temporária `APEX_APPLICATION_TEMP_FILES` estão corretos e contêm as informações necessárias para a atualização na tabela `EMPRESA`.
+- Antes de executar esta instrução SQL, certifique-se de que os dados na tabela temporária `APEX_APPLICATION_TEMP_FILES` estão corretos e contêm as informações necessárias para a atualização na tabela `FILI_BROWSE`.
 
 
 
@@ -148,8 +148,8 @@ BEGIN
   INTO   l_blob_content,
          l_mime_type,
          l_file_name
-  FROM   CELL_BOLETO
-  WHERE  ID_BOLETO = p_get_id;
+  FROM   FILI_BROWSE
+  WHERE  ID = p_get_id;
   sys.HTP.init;
   sys.OWA_UTIL.mime_header(l_mime_type, FALSE);
   sys.HTP.p('Content-Length: ' || DBMS_LOB.getlength(l_blob_content));
